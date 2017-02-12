@@ -1,3 +1,5 @@
+#Forked from https://www.kaggle.com/drn01z3/data-science-bowl-2017/mxnet-xgboost-baseline-lb-0-57/code
+
 import numpy as np
 import dicom
 import glob
@@ -7,10 +9,21 @@ import mxnet as mx
 import pandas as pd
 from tqdm import tqdm
 
-def get_extractor():
-    model = mx.model.FeedForward.load('resnet/resnet-50', 0, ctx=mx.cpu(), numpy_batch_size=1)
-    fea_symbol = model.symbol.get_internals()["flatten0_output"]
-    feature_extractor = mx.model.FeedForward(ctx=mx.cpu(), symbol=fea_symbol, numpy_batch_size=64,
+def get_extractor(gpu_flag=False):
+    """
+    Load the extractor model from resnet/resnet-50.
+    The input of the model is image (224,224)
+    """
+    if (gpu_flag):
+        model = mx.model.FeedForward.load('resnet/resnet-50', 0, ctx=mx.cpu(), numpy_batch_size=1)
+        fea_symbol = model.symbol.get_internals()["flatten0_output"]
+        feature_extractor = mx.model.FeedForward(ctx=mx.cpu(), symbol=fea_symbol, numpy_batch_size=64,
+                                             arg_params=model.arg_params, aux_params=model.aux_params,
+                                             allow_extra_params=True)
+    else:
+        model = mx.model.FeedForward.load('resnet/resnet-50', 0, ctx=mx.gpu(), numpy_batch_size=1)
+        fea_symbol = model.symbol.get_internals()["flatten0_output"]
+        feature_extractor = mx.model.FeedForward(ctx=mx.gpu(), symbol=fea_symbol, numpy_batch_size=64,
                                              arg_params=model.arg_params, aux_params=model.aux_params,
                                              allow_extra_params=True)
     return feature_extractor
